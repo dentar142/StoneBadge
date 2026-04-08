@@ -1,0 +1,15 @@
+{
+  "name": "stone-badge",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "GitHub 仓库石墩子徽章生成器 - 基于 commit SHA 生成独特的 3D 石墩子 SVG 徽章",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "jsdom": "^24.1.0",
+    "three": "0.155.0"
+  }
+}
