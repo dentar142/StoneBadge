@@ -1,99 +1,88 @@
-<h1 align="center"><img src="./logo.svg" alt="Stone Badge logo" /></h1>
+# StoneBadge — Stone & Toilet Edition
 
-<h1 align="center">Stone Badge - GitHub Stone Badge Generator</h1>
+> Per-repo unique 3D rotating SVG badge for your GitHub README. The badge color
+> is seeded by your repo's latest commit SHA, so every repository gets a
+> one-of-a-kind look that evolves with each commit.
+>
+> Fork of [professor-lee/StoneBadge](https://github.com/professor-lee/StoneBadge),
+> adding a procedurally-built **toilet** model and a new `/api/toilet`
+> endpoint alongside the original stone.
 
-<p align="center">
-	<a href="README_zh.md">简体中文</a>
-	&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-	<span> >English< </span>
-</p>
+🇬🇧 English | [🇨🇳 中文](./README_zh.md)
 
-## Project Overview
+---
 
-Stone Badge is a Node.js service that generates a 3D stone badge SVG from the latest commit SHA of a GitHub repository. It reads the repository's newest commit, turns the short SHA into unique colors, gradients, and glow effects, and returns an SVG badge that can be embedded directly into a README.
-## Usage Address
-
-- Live demo: <https://stone.professorlee.work>
-- Repository: <https://github.com/professor-lee/StoneBadge>
-
-## Features
-
-- Generate a stone badge from any GitHub repository URL
-- Auto-color the SVG from the latest commit SHA, so every repository gets a distinct result
-- Preview the badge in the browser and copy Markdown, HTML, or a direct link with one click
-- Support `POST /api/generate` to parse repository URLs and return badge metadata
-- Support `GET /api/stone/:owner/:repo` to return the SVG badge directly
-- Support automatic template generation and manual template upload through `POST /api/template`
-- Keep the frontend static, with low deployment and maintenance overhead
-
-## Tech Stack
-
-- Node.js 18+
-- Express
-- Three.js
-- JSDOM
-- Native fetch
-- HTML, CSS, JavaScript
-
-## Usage
-
-1. Open <https://stone.professorlee.work>
-2. Enter a GitHub repository URL, such as <https://github.com/professor-lee/StoneBadge>
-3. Click Generate Badge
-4. Copy the Markdown, HTML, or direct link into a README, document, or website
-
-Example Markdown:
+## Two endpoints
 
 ```md
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/StoneBadge)
+![Stone Badge](https://YOUR_DOMAIN/api/stone/<owner>/<repo>)
+![Toilet Badge](https://YOUR_DOMAIN/api/toilet/<owner>/<repo>)
 ```
 
-## Deployment Instructions
+| Path | Source model | Origin |
+|------|--------------|--------|
+| `/api/stone/:owner/:repo` | `seatstone.glb` (binary 3D mesh) | upstream |
+| `/api/toilet/:owner/:repo` | `lib/toilet-geometry.js` (Three.js primitives composed in code) | this fork |
 
-See [DeploymentInstructions.md](DeploymentInstructions.md) for the full deployment guide.
+---
 
-## Demo Examples
+## How it works in one paragraph
 
-### StoneBadge
-> <https://github.com/professor-lee/StoneBadge>
+At build time the server uses **Three.js + JSDOM** to render the 3D model to a
+20-frame stop-motion grayscale SVG (cached as `templates/*-template.svg`). At
+request time **`colorizer.js`** fetches the repo's latest commit SHA via the
+GitHub API, hashes the bytes into HSL parameters (hue / saturation / lightness
+in safe ranges), and rewrites every `fill` to a colored version while
+preserving the original 3D shading luminance — fast (~50 ms) and stateless.
+The animation itself plays via SVG `<animate>` tags toggling each frame's
+visibility every 0.5 s. Full algorithm in the upstream README.
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/StoneBadge)
+---
 
-### CNMPlayer
-> <https://github.com/professor-lee/CNMPlayer>
+## Quick start (local)
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/CNMPlayer)
+```bash
+git clone https://github.com/dentar142/StoneBadge.git
+cd StoneBadge
+npm install
+node server.js     # http://localhost:3000
+```
 
-### TMPlayer
-> <https://github.com/professor-lee/TMPlayer>
+On first start the server auto-generates any missing template SVGs (about
+30 s for the stone, 30 s for the toilet). Manually regenerate the toilet
+template after editing the geometry:
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/TMPlayer)
+```bash
+MODEL=toilet node lib/template-generator.js
+```
 
-### Next.js
-> <https://github.com/vercel/next.js>
+---
 
-![Stone Badge](https://stone.professorlee.work/api/stone/vercel/next.js)
+## Deploy
 
-### Node.js
-> <https://github.com/nodejs/node>
+See [DEPLOY_TOILET.md](./DEPLOY_TOILET.md). Three paths covered:
 
-![Stone Badge](https://stone.professorlee.work/api/stone/nodejs/node)
+1. **Render Blueprint** — one-click, free tier; `render.yaml` is in this repo
+2. **Fly.io** — always-on, region-selectable
+3. **GitHub Action static** — no server at all; manual refresh for personal repos
 
-### VS Code
-> <https://github.com/microsoft/vscode>
+---
 
-![Stone Badge](https://stone.professorlee.work/api/stone/microsoft/vscode)
+## Want a different shape?
 
-### Vue.js Core
-> <https://github.com/vuejs/core>
+Edit `lib/toilet-geometry.js`. Everything is stock Three.js primitives:
+`CylinderGeometry`, `TorusGeometry`, `BoxGeometry`. Compose, position,
+re-run `MODEL=toilet node lib/template-generator.js`, commit. The render
+pipeline does not care whether the source is a GLB file or a programmatic
+`THREE.Group`.
 
-![Stone Badge](https://stone.professorlee.work/api/stone/vuejs/core)
+---
 
-### TensorFlow
-> <https://github.com/tensorflow/tensorflow>
+## Credit
 
-![Stone Badge](https://stone.professorlee.work/api/stone/tensorflow/tensorflow)
+- Original concept, render pipeline, color algorithm:
+  **[professor-lee / StoneBadge](https://github.com/professor-lee/StoneBadge)**
+- Toilet model + `/api/toilet` route + Render blueprint + this README:
+  this fork
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=professor-lee/StoneBadge&type=date&legend=top-left)](https://www.star-history.com/?repos=professor-lee%2FStoneBadge&type=date&legend=top-left)
+MIT License.

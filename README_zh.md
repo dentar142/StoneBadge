@@ -1,99 +1,81 @@
-<h1 align="center"><img src="./logo.svg" alt="Stone Badge logo" /></h1>
+# StoneBadge —— 石墩子 & 马桶版
 
-<h1 align="center">Stone Badge - 石墩子徽章</h1>
+> 给每个 GitHub 仓库挂一颗独一无二的 3D 旋转 SVG 徽章，颜色由该仓库最新
+> commit SHA 决定 —— 每个仓库都长得不一样，颜色还会随 commit 演化。
+>
+> Fork 自 [professor-lee/StoneBadge](https://github.com/professor-lee/StoneBadge)，
+> 在原有石墩子之外新增了程序化构建的**马桶**模型与 `/api/toilet` 端点。
 
-<p align="center">
-	<a href="README.md">English</a>
-	&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-	<span> >简体中文< </span>
-</p>
+[🇬🇧 English](./README.md) | 🇨🇳 中文
 
-## 项目概述
+---
 
-Stone Badge 是一个基于 GitHub 仓库最近一次提交 SHA 生成 3D 石墩子 SVG 徽章的 Node.js 服务。它会读取仓库最新提交记录，把短 SHA 转换为独一无二的颜色、渐变和发光效果，并输出可直接嵌入 README 的 SVG 徽章。
-## 使用地址
-
-- 演示站点：<https://stone.professorlee.work>
-- 项目仓库：<https://github.com/professor-lee/StoneBadge>
-
-## 功能
-
-- 输入 GitHub 仓库地址即可生成对应的石墩子徽章
-- 基于最新 commit SHA 自动着色，每个仓库都会得到不同的 SVG 结果
-- 提供网页预览，并可一键复制 Markdown、HTML 和直接链接
-- 支持 `POST /api/generate` 解析仓库链接并返回徽章信息
-- 支持 `GET /api/stone/:owner/:repo` 直接输出 SVG 徽章
-- 支持模板自动生成与手动上传 `POST /api/template`
-- 前端为纯静态页面，部署和维护成本较低
-
-## 技术栈
-
-- Node.js 18+
-- Express
-- Three.js
-- JSDOM
-- 原生 fetch
-- HTML、CSS、JavaScript
-
-## 使用说明
-
-1. 打开 <https://stone.professorlee.work>
-2. 在输入框中填写 GitHub 仓库地址，例如 <https://github.com/professor-lee/StoneBadge>
-3. 点击“生成徽章”
-4. 复制 Markdown、HTML 或直接链接，粘贴到 README、文档或网站中
-
-示例 Markdown：
+## 两个端点
 
 ```md
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/StoneBadge)
+![石墩子](https://YOUR_DOMAIN/api/stone/<owner>/<repo>)
+![马桶](https://YOUR_DOMAIN/api/toilet/<owner>/<repo>)
 ```
 
-## 部署说明
+| 路径 | 模型来源 | 出处 |
+|------|----------|------|
+| `/api/stone/:owner/:repo` | `seatstone.glb`（二进制 3D 网格）| 上游 |
+| `/api/toilet/:owner/:repo` | `lib/toilet-geometry.js`（用代码拼起来的 Three.js 原生几何体）| 本 fork |
 
-完整部署步骤请参考 [DeploymentInstructions_zh.md](DeploymentInstructions_zh.md)。
+---
 
-## 演示示例
+## 工作原理（一段话）
 
-### StoneBadge
-> <https://github.com/professor-lee/StoneBadge>
+构建时服务器用 **Three.js + JSDOM** 把 3D 模型烘焙成 20 帧逐帧动画的灰度
+SVG（缓存为 `templates/*-template.svg`）。请求到来时 **`colorizer.js`** 调
+GitHub API 拿到最新 commit SHA，把字节哈希成 HSL 参数（色相 / 饱和度 /
+亮度都限定在安全区间），扫一遍 SVG 把所有 `fill` 改成配色版本，同时保留
+原始的 3D 灰度梯度 —— ~50 ms、无状态。动画通过 SVG `<animate>` 标签每
+0.5 秒切换一帧 visibility 实现。完整算法见上游 README。
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/StoneBadge)
+---
 
-### CNMPlayer
-> <https://github.com/professor-lee/CNMPlayer>
+## 本地启动
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/CNMPlayer)
+```bash
+git clone https://github.com/dentar142/StoneBadge.git
+cd StoneBadge
+npm install
+node server.js     # http://localhost:3000
+```
 
-### TMPlayer
-> <https://github.com/professor-lee/TMPlayer>
+首次启动时若缺模板会自动生成（石墩子约 30 秒、马桶约 30 秒）。改了几何
+之后手动重新生成马桶模板：
 
-![Stone Badge](https://stone.professorlee.work/api/stone/professor-lee/TMPlayer)
+```bash
+MODEL=toilet node lib/template-generator.js
+```
 
-### Next.js
-> <https://github.com/vercel/next.js>
+---
 
-![Stone Badge](https://stone.professorlee.work/api/stone/vercel/next.js)
+## 部署
 
-### Node.js
-> <https://github.com/nodejs/node>
+详见 [DEPLOY_TOILET.md](./DEPLOY_TOILET.md)，提供三种路径：
 
-![Stone Badge](https://stone.professorlee.work/api/stone/nodejs/node)
+1. **Render Blueprint** —— 一键部署，免费档；仓库已带 `render.yaml`
+2. **Fly.io** —— 一直在线、可选 region
+3. **GitHub Action 静态** —— 无需服务器，自家仓库手动触发刷新
 
-### VS Code
-> <https://github.com/microsoft/vscode>
+---
 
-![Stone Badge](https://stone.professorlee.work/api/stone/microsoft/vscode)
+## 想换个形状？
 
-### Vue.js Core
-> <https://github.com/vuejs/core>
+编辑 `lib/toilet-geometry.js`，全部用 Three.js 原生 primitives
+（`CylinderGeometry` / `TorusGeometry` / `BoxGeometry`）。改完跑
+`MODEL=toilet node lib/template-generator.js` 重新生成模板再 commit 即可。
+渲染管线不关心源是 GLB 文件还是程序化拼出来的 `THREE.Group`。
 
-![Stone Badge](https://stone.professorlee.work/api/stone/vuejs/core)
+---
 
-### TensorFlow
-> <https://github.com/tensorflow/tensorflow>
+## 致谢
 
-![Stone Badge](https://stone.professorlee.work/api/stone/tensorflow/tensorflow)
+- 原项目构思、渲染管线、染色算法：
+  **[professor-lee / StoneBadge](https://github.com/professor-lee/StoneBadge)**
+- 马桶模型 + `/api/toilet` 路由 + Render 蓝图 + 本 README：本 fork
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=professor-lee/StoneBadge&type=date&legend=top-left)](https://www.star-history.com/?repos=professor-lee%2FStoneBadge&type=date&legend=top-left)
+MIT 协议。
