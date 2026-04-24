@@ -1,0 +1,27 @@
+# Render Blueprint — one-click deploy for StoneBadge fork
+# https://render.com/docs/blueprint-spec
+#
+# Usage:
+#   1. Sign in to Render with your GitHub account
+#   2. New + → Blueprint → select this repo
+#   3. Click Apply, wait ~5-10 min for first deploy
+#   4. Endpoints become live at https://<service-name>.onrender.com
+#        /api/stone/:owner/:repo   — original 3D stone badge
+#        /api/toilet/:owner/:repo  — procedural 3D toilet badge
+
+services:
+  - type: web
+    name: stonebadge
+    runtime: node
+    region: singapore         # 离中国近；可选 oregon / frankfurt / ohio / virginia
+    plan: free                # 升 starter (~$7/mo) 可关闭冷启动
+    branch: main
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        value: "10000"        # Render 标准外部端口
+    autoDeploy: true          # main 分支推送即重新部署
+    healthCheckPath: /        # 静态资源 index.html，永远 200
